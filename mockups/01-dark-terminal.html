@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artemys — Dark Terminal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #e0e0e0; font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+  /* Top Bar */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid #1a1a1a; background: #0d0d0d; }
+  .logo { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 18px; color: #00ff88; letter-spacing: 2px; }
+  .logo span { color: #555; }
+  .topbar-right { display: flex; gap: 16px; align-items: center; font-size: 13px; color: #666; font-family: 'JetBrains Mono', monospace; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #00ff88; display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* Layout */
+  .dashboard { display: grid; grid-template-columns: 300px 1fr 320px; grid-template-rows: auto 1fr; gap: 1px; background: #1a1a1a; margin-top: 1px; min-height: calc(100vh - 49px); }
+  .panel { background: #0a0a0a; padding: 16px; }
+  .panel-header { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .panel-header .tag { font-size: 10px; padding: 2px 6px; border-radius: 2px; background: #1a1a1a; color: #00ff88; }
+
+  /* Profile Card */
+  .profile { text-align: center; padding-top: 24px; }
+  .avatar { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #00ff88; margin: 0 auto 12px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+  .profile-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .profile-handle { font-family: 'JetBrains Mono', monospace; color: #555; font-size: 13px; margin-bottom: 16px; }
+  .talent-score { font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700; color: #00ff88; line-height: 1; }
+  .talent-score-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .score-change { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #00ff88; margin-top: 8px; }
+  .score-change.down { color: #ff4444; }
+
+  /* Stats Grid */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #1a1a1a; margin-top: 20px; border: 1px solid #1a1a1a; }
+  .stat { background: #0a0a0a; padding: 12px; }
+  .stat-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; font-family: 'JetBrains Mono', monospace; }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; margin-top: 4px; }
+  .stat-value.green { color: #00ff88; }
+  .stat-value.amber { color: #ffaa00; }
+  .stat-value.red { color: #ff4444; }
+
+  /* Portfolio Breakdown */
+  .portfolio-bar { height: 6px; background: #1a1a1a; border-radius: 3px; margin: 8px 0; display: flex; overflow: hidden; }
+  .portfolio-bar div { height: 100%; }
+  .portfolio-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #111; font-size: 13px; }
+  .portfolio-item .dot { width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; display: inline-block; }
+  .portfolio-item .pct { font-family: 'JetBrains Mono', monospace; color: #888; }
+
+  /* Center — Market Chart */
+  .market-center { grid-column: 2; grid-row: 1 / 3; padding: 24px; }
+  .chart-area { background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 4px; height: 320px; position: relative; overflow: hidden; margin-bottom: 16px; }
+  .chart-svg { width: 100%; height: 100%; }
+  .grid-line { stroke: #151515; stroke-width: 1; }
+  .chart-line { fill: none; stroke: #00ff88; stroke-width: 2; }
+  .chart-area-fill { fill: url(#greenGradient); }
+  .price-labels { position: absolute; right: 12px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #444; }
+  .time-labels { display: flex; justify-content: space-between; padding: 0 40px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #444; margin-top: 8px; }
+  .chart-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .chart-tab { font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 6px 12px; border-radius: 3px; background: #111; color: #555; cursor: pointer; border: none; }
+  .chart-tab.active { background: #00ff8820; color: #00ff88; }
+
+  /* Ticker Strip */
+  .ticker-strip { display: flex; gap: 16px; padding: 12px 0; border-top: 1px solid #1a1a1a; overflow: hidden; margin-top: 16px; }
+  .ticker-item { font-family: 'JetBrains Mono', monospace; font-size: 12px; white-space: nowrap; display: flex; gap: 8px; }
+  .ticker-item .name { color: #888; }
+  .ticker-item .val { color: #00ff88; }
+  .ticker-item .val.down { color: #ff4444; }
+
+  /* Market Movers */
+  .movers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .mover-card { background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 4px; padding: 12px; }
+  .mover-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .mover-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #555; }
+  .mover-change { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; margin-top: 8px; }
+
+  /* Right Panel — Feed */
+  .right-panel { grid-column: 3; grid-row: 1 / 3; }
+  .signal-item { padding: 12px 0; border-bottom: 1px solid #111; }
+  .signal-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #00ff88; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .signal-type.alert { color: #ff4444; }
+  .signal-type.trend { color: #ffaa00; }
+  .signal-text { font-size: 13px; color: #ccc; line-height: 1.5; }
+  .signal-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #333; margin-top: 4px; }
+
+  /* Sector Heatmap */
+  .heatmap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 12px; }
+  .heatmap-cell { padding: 10px 6px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 10px; border-radius: 2px; }
+  .heatmap-cell .sector-name { color: #fff; font-weight: 500; margin-bottom: 2px; }
+  .heatmap-cell .sector-val { font-size: 12px; font-weight: 700; }
+  .heat-high { background: #00ff8830; }
+  .heat-mid { background: #00ff8815; }
+  .heat-low { background: #ffaa0020; }
+  .heat-neg { background: #ff444420; }
+
+  .design-label { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #333; background: #111; padding: 6px 16px; border-radius: 20px; border: 1px solid #1a1a1a; z-index: 10; }
+</style>
+</head>
+<body>
+
+<div class="design-label">Design Direction 1: Dark Terminal / Bloomberg</div>
+
+<div class="topbar">
+  <div class="logo">ARTEMYS <span>// TALENT MARKET</span></div>
+  <div class="topbar-right">
+    <span><span class="live-dot"></span> LIVE</span>
+    <span>MKT OPEN</span>
+    <span>2026-03-31 15:42:08 EST</span>
+  </div>
+</div>
+
+<div class="dashboard">
+  <!-- Left Panel: Personal Profile -->
+  <div class="panel">
+    <div class="panel-header">Your Portfolio <span class="tag">LIVE</span></div>
+    <div class="profile">
+      <div class="avatar">JB</div>
+      <div class="profile-name">Jeffrey Blue</div>
+      <div class="profile-handle">@jblue</div>
+      <div class="talent-score">847</div>
+      <div class="talent-score-label">Composite Talent Index</div>
+      <div class="score-change">▲ +12.4 (1.5%) today</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-label">Market Rank</div>
+        <div class="stat-value green">Top 3%</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Demand Score</div>
+        <div class="stat-value green">92</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Momentum</div>
+        <div class="stat-value amber">+8.2%</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Visibility</div>
+        <div class="stat-value green">HIGH</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <div class="panel-header">Skill Portfolio</div>
+      <div class="portfolio-bar">
+        <div style="width: 35%; background: #00ff88;"></div>
+        <div style="width: 25%; background: #00cc66;"></div>
+        <div style="width: 20%; background: #ffaa00;"></div>
+        <div style="width: 12%; background: #0088ff;"></div>
+        <div style="width: 8%; background: #8844ff;"></div>
+      </div>
+      <div class="portfolio-item"><span><span class="dot" style="background:#00ff88"></span>Product Strategy</span><span class="pct">35%</span></div>
+      <div class="portfolio-item"><span><span class="dot" style="background:#00cc66"></span>AI / ML</span><span class="pct">25%</span></div>
+      <div class="portfolio-item"><span><span class="dot" style="background:#ffaa00"></span>Engineering Mgmt</span><span class="pct">20%</span></div>
+      <div class="portfolio-item"><span><span class="dot" style="background:#0088ff"></span>Growth</span><span class="pct">12%</span></div>
+      <div class="portfolio-item"><span><span class="dot" style="background:#8844ff"></span>GTM Strategy</span><span class="pct">8%</span></div>
+    </div>
+  </div>
+
+  <!-- Center: Market View -->
+  <div class="market-center">
+    <div class="panel-header">Talent Market Index — Product & AI Sector <span class="tag">▲ 2.3%</span></div>
+    <div class="chart-tabs">
+      <button class="chart-tab">1D</button>
+      <button class="chart-tab">1W</button>
+      <button class="chart-tab active">1M</button>
+      <button class="chart-tab">3M</button>
+      <button class="chart-tab">1Y</button>
+      <button class="chart-tab">ALL</button>
+    </div>
+    <div class="chart-area">
+      <svg class="chart-svg" viewBox="0 0 800 300" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#00ff88" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#00ff88" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <line x1="0" y1="60" x2="800" y2="60" class="grid-line"/>
+        <line x1="0" y1="120" x2="800" y2="120" class="grid-line"/>
+        <line x1="0" y1="180" x2="800" y2="180" class="grid-line"/>
+        <line x1="0" y1="240" x2="800" y2="240" class="grid-line"/>
+        <path d="M0,200 C50,195 100,180 150,185 C200,190 250,170 300,155 C350,140 400,145 450,130 C500,115 550,120 600,100 C650,80 700,85 750,70 L800,60" class="chart-line"/>
+        <path d="M0,200 C50,195 100,180 150,185 C200,190 250,170 300,155 C350,140 400,145 450,130 C500,115 550,120 600,100 C650,80 700,85 750,70 L800,60 L800,300 L0,300 Z" class="chart-area-fill"/>
+      </svg>
+      <div class="price-labels">
+        <span>900</span><span>850</span><span>800</span><span>750</span><span>700</span>
+      </div>
+    </div>
+    <div class="time-labels">
+      <span>Mar 1</span><span>Mar 8</span><span>Mar 15</span><span>Mar 22</span><span>Mar 31</span>
+    </div>
+
+    <div class="ticker-strip">
+      <div class="ticker-item"><span class="name">AI/ML ENG</span><span class="val">▲ +4.2%</span></div>
+      <div class="ticker-item"><span class="name">PRODUCT</span><span class="val">▲ +2.1%</span></div>
+      <div class="ticker-item"><span class="name">DEVOPS</span><span class="val down">▼ -1.3%</span></div>
+      <div class="ticker-item"><span class="name">DATA SCI</span><span class="val">▲ +0.8%</span></div>
+      <div class="ticker-item"><span class="name">FRONTEND</span><span class="val down">▼ -0.5%</span></div>
+      <div class="ticker-item"><span class="name">SECURITY</span><span class="val">▲ +3.7%</span></div>
+      <div class="ticker-item"><span class="name">DESIGN</span><span class="val">▲ +1.1%</span></div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <div class="panel-header">Sector Heatmap</div>
+      <div class="heatmap">
+        <div class="heatmap-cell heat-high"><div class="sector-name">AI/ML</div><div class="sector-val" style="color:#00ff88">+4.2%</div></div>
+        <div class="heatmap-cell heat-high"><div class="sector-name">Security</div><div class="sector-val" style="color:#00ff88">+3.7%</div></div>
+        <div class="heatmap-cell heat-mid"><div class="sector-name">Product</div><div class="sector-val" style="color:#00ff88">+2.1%</div></div>
+        <div class="heatmap-cell heat-mid"><div class="sector-name">Design</div><div class="sector-val" style="color:#00ff88">+1.1%</div></div>
+        <div class="heatmap-cell heat-mid"><div class="sector-name">Data Sci</div><div class="sector-val" style="color:#00ff88">+0.8%</div></div>
+        <div class="heatmap-cell heat-mid"><div class="sector-name">Backend</div><div class="sector-val" style="color:#00ff88">+0.3%</div></div>
+        <div class="heatmap-cell heat-neg"><div class="sector-name">Frontend</div><div class="sector-val" style="color:#ff4444">-0.5%</div></div>
+        <div class="heatmap-cell heat-neg"><div class="sector-name">DevOps</div><div class="sector-val" style="color:#ff4444">-1.3%</div></div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <div class="panel-header">Top Movers Today</div>
+      <div class="movers-grid">
+        <div class="mover-card">
+          <div class="mover-title">LLM Fine-tuning</div>
+          <div class="mover-meta">SKILL · AI/ML</div>
+          <div class="mover-change" style="color:#00ff88">▲ +18.4%</div>
+        </div>
+        <div class="mover-card">
+          <div class="mover-title">Rust Systems</div>
+          <div class="mover-meta">SKILL · ENGINEERING</div>
+          <div class="mover-change" style="color:#00ff88">▲ +12.1%</div>
+        </div>
+        <div class="mover-card">
+          <div class="mover-title">React Native</div>
+          <div class="mover-meta">SKILL · FRONTEND</div>
+          <div class="mover-change" style="color:#ff4444">▼ -6.7%</div>
+        </div>
+        <div class="mover-card">
+          <div class="mover-title">AI Safety</div>
+          <div class="mover-meta">ROLE · RESEARCH</div>
+          <div class="mover-change" style="color:#00ff88">▲ +9.3%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel: Signal Feed -->
+  <div class="panel right-panel">
+    <div class="panel-header">Grok Signal Feed <span class="tag">AI</span></div>
+
+    <div class="signal-item">
+      <div class="signal-type">MARKET INSIGHT</div>
+      <div class="signal-text">AI product management roles surged 23% this week. Your portfolio is well-positioned — consider publishing thought leadership to capitalize on visibility.</div>
+      <div class="signal-time">2 min ago · via Grok</div>
+    </div>
+
+    <div class="signal-item">
+      <div class="signal-type alert">ALERT</div>
+      <div class="signal-text">3 companies in your watchlist (OpenAI, Anthropic, xAI) posted senior PM roles in the last 24h matching your profile.</div>
+      <div class="signal-time">18 min ago</div>
+    </div>
+
+    <div class="signal-item">
+      <div class="signal-type trend">TREND</div>
+      <div class="signal-text">Emerging signal: "AI-native product management" gaining traction on X. 847 mentions this week, up 340% MoM.</div>
+      <div class="signal-time">1h ago</div>
+    </div>
+
+    <div class="signal-item">
+      <div class="signal-type">MARKET INSIGHT</div>
+      <div class="signal-text">Salary benchmarks for your composite profile: $245K-$310K base in SF, $220K-$280K remote. Up 8% QoQ.</div>
+      <div class="signal-time">3h ago · via Grok</div>
+    </div>
+
+    <div class="signal-item">
+      <div class="signal-type trend">TREND</div>
+      <div class="signal-text">Your skill in "Growth Strategy" is underweighted vs. market demand. Consider adding growth-related content to your portfolio.</div>
+      <div class="signal-time">5h ago · via Grok</div>
+    </div>
+
+    <div class="signal-item">
+      <div class="signal-type">SOCIAL SIGNAL</div>
+      <div class="signal-text">Your recent X thread on AI product strategy reached 12.4K impressions. Portfolio visibility score increased +3.2 points.</div>
+      <div class="signal-time">8h ago</div>
+    </div>
+
+    <div class="signal-item">
+      <div class="signal-type alert">EARNINGS IMPACT</div>
+      <div class="signal-text">Alphabet Q1 earnings beat expectations. GCP AI hiring projected to increase 15% — positive signal for AI/ML sector talent.</div>
+      <div class="signal-time">12h ago</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

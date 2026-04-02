@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artemys — Modern Fintech</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fafafa; color: #1a1a2e; font-family: 'Inter', -apple-system, sans-serif; min-height: 100vh; }
+
+  /* Nav */
+  .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; background: #fff; border-bottom: 1px solid #eee; }
+  .logo { font-weight: 800; font-size: 22px; color: #1a1a2e; }
+  .logo span { color: #5AC53A; }
+  .nav-links { display: flex; gap: 32px; font-size: 14px; font-weight: 500; color: #888; }
+  .nav-links a { text-decoration: none; color: inherit; cursor: pointer; }
+  .nav-links a.active { color: #1a1a2e; }
+  .nav-right { display: flex; gap: 16px; align-items: center; }
+  .nav-search { padding: 8px 16px; border-radius: 24px; border: 1px solid #e0e0e0; font-size: 13px; color: #888; background: #f5f5f5; width: 200px; }
+  .avatar-sm { width: 32px; height: 32px; border-radius: 50%; background: #5AC53A; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+
+  /* Hero Score */
+  .hero { background: #fff; padding: 40px 32px 32px; }
+  .hero-top { display: flex; align-items: flex-start; justify-content: space-between; max-width: 1200px; margin: 0 auto; }
+  .hero-left {}
+  .greeting { font-size: 14px; color: #888; margin-bottom: 4px; }
+  .score-row { display: flex; align-items: baseline; gap: 16px; }
+  .big-score { font-size: 64px; font-weight: 800; color: #1a1a2e; line-height: 1; }
+  .score-badge { display: inline-flex; align-items: center; gap: 4px; background: #E8F9E0; color: #2D8A0F; font-size: 14px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+  .score-label { font-size: 14px; color: #888; margin-top: 8px; }
+  .time-pills { display: flex; gap: 4px; margin-top: 20px; }
+  .time-pill { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; background: #f0f0f0; color: #888; border: none; cursor: pointer; }
+  .time-pill.active { background: #1a1a2e; color: #fff; }
+
+  /* Chart */
+  .chart-container { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
+  .chart-box { background: #fff; border-radius: 16px; padding: 24px; border: 1px solid #eee; height: 300px; position: relative; overflow: hidden; }
+  .chart-svg { width: 100%; height: 100%; }
+  .chart-grid { stroke: #f0f0f0; stroke-width: 1; }
+  .chart-line { fill: none; stroke: #5AC53A; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .chart-fill { fill: url(#greenGrad); }
+  .chart-time-row { display: flex; justify-content: space-between; padding: 12px 24px 0; font-size: 12px; color: #bbb; }
+
+  /* Cards Grid */
+  .cards-section { max-width: 1200px; margin: 0 auto; padding: 0 32px 32px; }
+  .cards-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .card { background: #fff; border-radius: 16px; padding: 24px; border: 1px solid #eee; }
+  .card-title { font-size: 13px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+
+  /* Portfolio Card */
+  .portfolio-ring { width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(#5AC53A 0% 35%, #34A853 35% 60%, #FBBC05 60% 80%, #4285F4 80% 92%, #9B72FF 92% 100%); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
+  .portfolio-ring-inner { width: 80px; height: 80px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .ring-score { font-size: 20px; font-weight: 800; }
+  .ring-label { font-size: 10px; color: #888; }
+  .portfolio-list { margin-top: 8px; }
+  .portfolio-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; font-size: 13px; }
+  .portfolio-row .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; display: inline-block; }
+  .portfolio-row .name { display: flex; align-items: center; }
+  .portfolio-pct { font-weight: 600; }
+  .portfolio-change { font-size: 12px; margin-left: 8px; }
+  .up { color: #2D8A0F; }
+  .down { color: #EA4335; }
+
+  /* Market Card */
+  .market-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+  .market-row:last-child { border-bottom: none; }
+  .market-name { font-size: 14px; font-weight: 600; }
+  .market-sub { font-size: 12px; color: #888; }
+  .market-val { text-align: right; }
+  .market-score { font-size: 14px; font-weight: 700; }
+  .market-change { font-size: 12px; }
+  .market-bar { height: 4px; background: #f0f0f0; border-radius: 2px; margin-top: 4px; }
+  .market-bar-fill { height: 100%; border-radius: 2px; background: #5AC53A; }
+
+  /* Grok Card */
+  .grok-card { background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%); color: #fff; }
+  .grok-card .card-title { color: #9B72FF; }
+  .grok-icon { font-size: 24px; margin-bottom: 12px; }
+  .grok-insight { font-size: 15px; line-height: 1.6; margin-bottom: 16px; }
+  .grok-insight strong { color: #5AC53A; }
+  .grok-actions { display: flex; gap: 8px; }
+  .grok-btn { padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; }
+  .grok-btn-primary { background: #5AC53A; color: #fff; }
+  .grok-btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
+
+  /* Bottom stats */
+  .stats-strip { max-width: 1200px; margin: 0 auto; padding: 0 32px 32px; }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .stat-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid #eee; }
+  .stat-label { font-size: 12px; color: #888; font-weight: 500; margin-bottom: 8px; }
+  .stat-big { font-size: 28px; font-weight: 800; }
+  .stat-sub { font-size: 12px; color: #888; margin-top: 4px; }
+  .stat-badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px; margin-top: 8px; }
+  .badge-green { background: #E8F9E0; color: #2D8A0F; }
+  .badge-amber { background: #FFF3CD; color: #856404; }
+
+  .design-label { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); font-size: 13px; color: #888; background: #fff; padding: 8px 20px; border-radius: 24px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.06); z-index: 10; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="design-label">Design Direction 2: Modern Fintech / Robinhood</div>
+
+<div class="nav">
+  <div class="logo">artemys<span>.</span></div>
+  <div class="nav-links">
+    <a class="active">Dashboard</a>
+    <a>Market</a>
+    <a>Compare</a>
+    <a>Insights</a>
+    <a>Settings</a>
+  </div>
+  <div class="nav-right">
+    <input class="nav-search" placeholder="Search skills, sectors..." />
+    <div class="avatar-sm">JB</div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-top">
+    <div class="hero-left">
+      <div class="greeting">Good afternoon, Jeffrey</div>
+      <div class="score-row">
+        <div class="big-score">847.3</div>
+        <div class="score-badge">&#9650; 12.4 (1.5%)</div>
+      </div>
+      <div class="score-label">Your Talent Index &middot; Updated 2 min ago</div>
+      <div class="time-pills">
+        <button class="time-pill">1D</button>
+        <button class="time-pill">1W</button>
+        <button class="time-pill active">1M</button>
+        <button class="time-pill">3M</button>
+        <button class="time-pill">1Y</button>
+        <button class="time-pill">ALL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="chart-container">
+  <div class="chart-box">
+    <svg class="chart-svg" viewBox="0 0 900 250" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#5AC53A" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#5AC53A" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <line x1="0" y1="50" x2="900" y2="50" class="chart-grid"/>
+      <line x1="0" y1="100" x2="900" y2="100" class="chart-grid"/>
+      <line x1="0" y1="150" x2="900" y2="150" class="chart-grid"/>
+      <line x1="0" y1="200" x2="900" y2="200" class="chart-grid"/>
+      <path d="M0,180 C40,175 80,170 120,172 C160,174 200,165 240,155 C280,145 320,148 360,140 C400,132 440,125 480,118 C520,110 560,115 600,105 C640,95 680,88 720,80 C760,72 800,68 840,58 L900,50" class="chart-line"/>
+      <path d="M0,180 C40,175 80,170 120,172 C160,174 200,165 240,155 C280,145 320,148 360,140 C400,132 440,125 480,118 C520,110 560,115 600,105 C640,95 680,88 720,80 C760,72 800,68 840,58 L900,50 L900,250 L0,250 Z" class="chart-fill"/>
+    </svg>
+  </div>
+  <div class="chart-time-row">
+    <span>Mar 1</span><span>Mar 5</span><span>Mar 10</span><span>Mar 15</span><span>Mar 20</span><span>Mar 25</span><span>Mar 31</span>
+  </div>
+</div>
+
+<div class="stats-strip">
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Market Rank</div>
+      <div class="stat-big up">Top 3%</div>
+      <div class="stat-sub">of Product + AI professionals</div>
+      <div class="stat-badge badge-green">&#9650; 2 percentiles this month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Demand Score</div>
+      <div class="stat-big">92</div>
+      <div class="stat-sub">Based on 12,400 matching roles</div>
+      <div class="stat-badge badge-green">&#9650; +7 this quarter</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Salary Benchmark</div>
+      <div class="stat-big">$278K</div>
+      <div class="stat-sub">Median for your profile (SF)</div>
+      <div class="stat-badge badge-green">&#9650; +8% QoQ</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Visibility Score</div>
+      <div class="stat-big">74</div>
+      <div class="stat-sub">X engagement + content output</div>
+      <div class="stat-badge badge-amber">Room to grow</div>
+    </div>
+  </div>
+</div>
+
+<div class="cards-section">
+  <div class="cards-grid">
+    <!-- Portfolio -->
+    <div class="card">
+      <div class="card-title">Your Portfolio</div>
+      <div class="portfolio-ring">
+        <div class="portfolio-ring-inner">
+          <div class="ring-score">A-</div>
+          <div class="ring-label">Diversification</div>
+        </div>
+      </div>
+      <div class="portfolio-list">
+        <div class="portfolio-row">
+          <span class="name"><span class="dot" style="background:#5AC53A"></span>Product Strategy</span>
+          <span><span class="portfolio-pct">35%</span><span class="portfolio-change up">&#9650; 3.1%</span></span>
+        </div>
+        <div class="portfolio-row">
+          <span class="name"><span class="dot" style="background:#34A853"></span>AI / ML</span>
+          <span><span class="portfolio-pct">25%</span><span class="portfolio-change up">&#9650; 7.2%</span></span>
+        </div>
+        <div class="portfolio-row">
+          <span class="name"><span class="dot" style="background:#FBBC05"></span>Engineering Mgmt</span>
+          <span><span class="portfolio-pct">20%</span><span class="portfolio-change up">&#9650; 1.4%</span></span>
+        </div>
+        <div class="portfolio-row">
+          <span class="name"><span class="dot" style="background:#4285F4"></span>Growth</span>
+          <span><span class="portfolio-pct">12%</span><span class="portfolio-change up">&#9650; 2.8%</span></span>
+        </div>
+        <div class="portfolio-row">
+          <span class="name"><span class="dot" style="background:#9B72FF"></span>GTM Strategy</span>
+          <span><span class="portfolio-pct">8%</span><span class="portfolio-change down">&#9660; 0.5%</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Market Movers -->
+    <div class="card">
+      <div class="card-title">Market Movers</div>
+      <div class="market-row">
+        <div>
+          <div class="market-name">AI/ML Engineering</div>
+          <div class="market-sub">12,400 open roles</div>
+        </div>
+        <div class="market-val">
+          <div class="market-score">3,102</div>
+          <div class="market-change up">&#9650; +8.7%</div>
+        </div>
+      </div>
+      <div class="market-row">
+        <div>
+          <div class="market-name">Product Strategy</div>
+          <div class="market-sub">8,900 open roles</div>
+        </div>
+        <div class="market-val">
+          <div class="market-score">1,892</div>
+          <div class="market-change up">&#9650; +4.2%</div>
+        </div>
+      </div>
+      <div class="market-row">
+        <div>
+          <div class="market-name">Security Engineering</div>
+          <div class="market-sub">5,600 open roles</div>
+        </div>
+        <div class="market-val">
+          <div class="market-score">2,341</div>
+          <div class="market-change up">&#9650; +3.7%</div>
+        </div>
+      </div>
+      <div class="market-row">
+        <div>
+          <div class="market-name">Frontend Development</div>
+          <div class="market-sub">14,200 open roles</div>
+        </div>
+        <div class="market-val">
+          <div class="market-score">987</div>
+          <div class="market-change down">&#9660; -1.3%</div>
+        </div>
+      </div>
+      <div class="market-row">
+        <div>
+          <div class="market-name">DevOps / Platform</div>
+          <div class="market-sub">7,800 open roles</div>
+        </div>
+        <div class="market-val">
+          <div class="market-score">1,456</div>
+          <div class="market-change down">&#9660; -0.5%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grok -->
+    <div class="card grok-card">
+      <div class="card-title">Grok Insights</div>
+      <div class="grok-insight">
+        AI-native product management roles surged <strong>8.7% this week</strong>. Your portfolio is well-positioned in the 91st percentile.
+      </div>
+      <div class="grok-insight">
+        Recommendation: Your <strong>AI/ML allocation (25%)</strong> is strong but could increase to 30% given current demand trajectory. Consider publishing technical content to boost visibility from 74 → 85+.
+      </div>
+      <div class="grok-insight" style="font-size:13px; color:#aaa;">
+        3 companies on your watchlist posted matching roles today: <strong style="color:#fff;">xAI, Anthropic, OpenAI</strong>
+      </div>
+      <div class="grok-actions">
+        <button class="grok-btn grok-btn-primary">View Matches</button>
+        <button class="grok-btn grok-btn-secondary">Ask Grok</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
