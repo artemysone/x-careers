@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { searchTweets } from "@/lib/api";
+import { useState, useEffect, useCallback } from "react";
+import { getFeed } from "@/lib/api";
+import type { FeedTweet } from "@/lib/api";
 
 interface Tweet {
   id: number | string;
@@ -118,47 +119,52 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d`;
 }
 
+const POLL_INTERVAL = 2 * 60 * 1000; // 2 minutes
+
 export default function TrendingTweets() {
   const [tweets, setTweets] = useState<Tweet[]>(mockTweets);
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  const fetchFeed = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const feed = await getFeed();
+      if (signal?.aborted) return;
+      if (feed?.tweets?.length) {
+        const mapped: Tweet[] = feed.tweets.map((t: FeedTweet) => ({
+          id: t.id,
+          name: t.authorName,
+          handle: `@${t.authorUsername}`,
+          avatarUrl: t.authorAvatar,
+          verified: t.verified,
+          time: t.createdAt ? timeAgo(t.createdAt) : "",
+          content: t.text,
+          likes: t.likes,
+          reposts: t.retweets,
+          views: t.views,
+        }));
+        setTweets(mapped);
+        setIsLive(feed.isLive);
+        setLastUpdated(feed.lastUpdated);
+      }
+    } catch {
+      // API not configured — keep mock data
+    }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
-    searchTweets("hiring OR careers OR recruiting (AI OR engineering OR product)", 20)
-      .then((data) => {
-        if (cancelled) return;
-        if (data?.tweets?.length) {
-          const usersMap = new Map<string, { name: string; username: string; profile_image_url?: string; verified?: boolean }>();
-          for (const u of data.users ?? []) {
-            usersMap.set(u.id, u);
-          }
-          const live: Tweet[] = data.tweets.map((t: { id: string; text: string; created_at?: string; author_id?: string; public_metrics?: { like_count: number; retweet_count: number; impression_count: number } }) => {
-            const user = usersMap.get(t.author_id ?? "");
-            return {
-              id: t.id,
-              name: user?.name ?? "Unknown",
-              handle: `@${user?.username ?? "unknown"}`,
-              avatarUrl: user?.profile_image_url ?? "",
-              verified: user?.verified ?? false,
-              time: t.created_at ? timeAgo(t.created_at) : "",
-              content: t.text,
-              likes: t.public_metrics?.like_count ?? 0,
-              reposts: t.public_metrics?.retweet_count ?? 0,
-              views: t.public_metrics?.impression_count ?? 0,
-            };
-          });
-          setTweets(live);
-          setIsLive(true);
-        }
-      })
-      .catch(() => {
-        // API not configured — keep mock data
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+    fetchFeed(controller.signal).finally(() => {
+      if (!controller.signal.aborted) setLoading(false);
+    });
+    const interval = setInterval(() => fetchFeed(controller.signal), POLL_INTERVAL);
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
+  }, [fetchFeed]);
 
   return (
     <div>
@@ -167,6 +173,9 @@ export default function TrendingTweets() {
           {isLive && <span className="px-2 py-0.5 rounded-full bg-x-green/15 text-x-green text-[11px] font-semibold">LIVE</span>}
           {loading && <span className="text-[12px] text-x-muted animate-pulse">Searching X...</span>}
           <span className="text-[12px] text-x-muted">Real-time hiring posts from X</span>
+          {lastUpdated && !loading && (
+            <span className="text-[11px] text-x-muted ml-auto">Updated {timeAgo(lastUpdated)} ago</span>
+          )}
         </div>
       )}
       {tweets.map((tweet) => (

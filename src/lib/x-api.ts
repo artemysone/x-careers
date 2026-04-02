@@ -1,4 +1,4 @@
-import { TwitterApi } from "twitter-api-v2";
+import { TwitterApi, type Tweetv2SearchParams } from "twitter-api-v2";
 
 /**
  * Get a Twitter API client. Supports two modes:
@@ -74,6 +74,60 @@ export async function searchTweets(query: string, max: number = 20, bearerToken?
   return {
     tweets: result.data?.data ?? [],
     users: result.data?.includes?.users ?? [],
+  };
+}
+
+/**
+ * Search for hiring-related tweets using targeted queries with spam filters.
+ * Runs 2 queries in parallel and deduplicates results.
+ */
+export async function searchHiringTweets(bearerToken?: string) {
+  const client = getClient(bearerToken);
+
+  const queries = [
+    `("we're hiring" OR "we are hiring" OR "join our team" OR "now hiring") -is:retweet -is:reply lang:en`,
+    `("hiring" OR "open role") ("engineer" OR "developer" OR "designer" OR "product manager") -is:retweet -is:reply lang:en`,
+  ];
+
+  // X API pay-per-use: $0.005/tweet + $0.010/user per result
+  // Default 20 per query (40 total) — Grok filters ~80%, so we need volume
+  const perQuery = parseInt(process.env.FEED_RESULTS_PER_QUERY ?? "20") as 10 | 20 | 50 | 100;
+  const searchOpts: Partial<Tweetv2SearchParams> = {
+    max_results: perQuery,
+    sort_order: "relevancy",
+    "tweet.fields": ["created_at", "public_metrics", "author_id", "entities"],
+    "user.fields": ["name", "username", "profile_image_url", "verified"],
+    expansions: ["author_id"],
+  };
+
+  const results = await Promise.all(
+    queries.map(async (query) => {
+      try {
+        return await client.v2.search(query, searchOpts);
+      } catch {
+        // sort_order may not be available on all tiers — retry without it
+        const { sort_order: _, ...fallbackOpts } = searchOpts;
+        return await client.v2.search(query, fallbackOpts);
+      }
+    })
+  );
+
+  // Merge and deduplicate tweets + users
+  const tweetsMap = new Map<string, { id: string; text: string; created_at?: string; author_id?: string; public_metrics?: { like_count: number; retweet_count: number; impression_count: number } }>();
+  const usersMap = new Map<string, { id: string; name: string; username: string; profile_image_url?: string; verified?: boolean }>();
+
+  for (const result of results) {
+    for (const tweet of result.data?.data ?? []) {
+      tweetsMap.set(tweet.id, tweet as typeof tweetsMap extends Map<string, infer V> ? V : never);
+    }
+    for (const user of result.data?.includes?.users ?? []) {
+      usersMap.set(user.id, user as typeof usersMap extends Map<string, infer V> ? V : never);
+    }
+  }
+
+  return {
+    tweets: Array.from(tweetsMap.values()),
+    users: Array.from(usersMap.values()),
   };
 }
 

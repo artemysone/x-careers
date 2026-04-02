@@ -71,6 +71,33 @@ export async function searchTweets(query: string, max: number = 20) {
   return (await res.json()).data;
 }
 
+export interface FeedTweet {
+  id: string;
+  text: string;
+  authorName: string;
+  authorUsername: string;
+  authorAvatar: string;
+  verified: boolean;
+  createdAt: string;
+  likes: number;
+  retweets: number;
+  views: number;
+  grokScore: number | null;
+  engagementScore: number;
+}
+
+export interface FeedResponse {
+  tweets: FeedTweet[];
+  lastUpdated: string;
+  isLive: boolean;
+}
+
+export async function getFeed(): Promise<FeedResponse> {
+  const res = await fetch("/api/x/feed");
+  if (!res.ok) throw new Error(await errorMessage(res));
+  return (await res.json()).data;
+}
+
 export async function getMyProfile() {
   const res = await fetch("/api/x/me");
   if (!res.ok) throw new Error(await errorMessage(res));

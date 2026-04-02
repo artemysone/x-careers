@@ -91,6 +91,56 @@ export async function analyzeJob(job: {
 }
 
 /**
+ * Batch-score tweets for relevance to hiring/talent market signals.
+ * Returns a map of tweet ID → score (0-100).
+ * On failure, returns an empty object (pipeline degrades to engagement-only sorting).
+ */
+export async function scoreTweetsForRelevance(
+  tweets: { id: string; text: string }[]
+): Promise<Record<string, number>> {
+  if (tweets.length === 0) return {};
+
+  const tweetList = tweets
+    .map((t) => `ID: ${t.id}\nText: ${t.text}`)
+    .join("\n\n");
+
+  try {
+    const raw = await chat(
+      [
+        {
+          role: "system",
+          content: `You are a content relevance scorer for a tech hiring marketplace. Score each tweet 0-100 for how relevant it is to genuine tech hiring and career opportunities.
+
+High scores (80-100): Real job postings with details, hiring announcements from companies, significant market signals (funding, layoffs, company growth).
+Medium scores (40-79): General career advice from credible sources, industry hiring trends.
+Low scores (0-39): Spam, self-promotion, crypto/forex, MLM, generic motivational content, recruitment agency ads without specifics, "DM me for opportunities" posts.
+
+Return ONLY valid JSON: an object mapping tweet ID to score. Example: {"123": 85, "456": 20}`,
+        },
+        { role: "user", content: tweetList },
+      ],
+      { temperature: 0, maxTokens: 512 }
+    );
+
+    // Strip markdown fences if present
+    const cleaned = raw.replace(/```(?:json)?\s*/g, "").replace(/```\s*/g, "").trim();
+    const parsed = JSON.parse(cleaned) as Record<string, number>;
+
+    // Clamp scores to 0-100
+    const result: Record<string, number> = {};
+    for (const [id, score] of Object.entries(parsed)) {
+      if (typeof score === "number") {
+        result[id] = Math.max(0, Math.min(100, Math.round(score)));
+      }
+    }
+    return result;
+  } catch {
+    // Grok unavailable or bad response — degrade gracefully
+    return {};
+  }
+}
+
+/**
  * General-purpose Grok chat for the conversational UI.
  */
 export async function grokChat(
