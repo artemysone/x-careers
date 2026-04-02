@@ -85,8 +85,8 @@ export async function searchHiringTweets(bearerToken?: string) {
   const client = getClient(bearerToken);
 
   const queries = [
-    `("we're hiring" OR "we are hiring" OR "join our team" OR "now hiring") -is:retweet -is:reply lang:en`,
-    `("hiring" OR "open role") ("engineer" OR "developer" OR "designer" OR "product manager") -is:retweet -is:reply lang:en`,
+    `("we're hiring" OR "we are hiring" OR "join our team" OR "now hiring") is:verified -is:retweet -is:reply lang:en`,
+    `("hiring" OR "open role") ("engineer" OR "developer" OR "designer" OR "product manager") is:verified -is:retweet -is:reply lang:en`,
   ];
 
   // X API pay-per-use: $0.005/tweet + $0.010/user per result
