@@ -109,11 +109,13 @@ export async function scoreTweetsForRelevance(
       [
         {
           role: "system",
-          content: `You are a content relevance scorer for a tech hiring marketplace. Score each tweet 0-100 for how relevant it is to genuine tech hiring and career opportunities.
+          content: `You are a content relevance scorer for a US-focused tech hiring marketplace. Score each tweet 0-100 for how relevant it is to genuine tech hiring and career opportunities IN THE UNITED STATES.
 
-High scores (80-100): Real job postings with details, hiring announcements from companies, significant market signals (funding, layoffs, company growth).
-Medium scores (40-79): General career advice from credible sources, industry hiring trends.
-Low scores (0-39): Spam, self-promotion, crypto/forex, MLM, generic motivational content, recruitment agency ads without specifics, "DM me for opportunities" posts.
+High scores (80-100): Real US-based job postings with details, hiring announcements from US companies, roles listing US cities/states, salaries in USD, US market signals.
+Medium scores (40-79): Posts from known US companies without explicit location, remote roles that could be US-based, general US tech industry trends.
+Low scores (0-39): Non-US jobs (Nigeria, India, UK, UAE, etc.), spam, self-promotion, crypto/forex, MLM, generic motivational content, recruitment agency ads without specifics, "DM me for opportunities" posts.
+
+If a post mentions a non-US location (Lagos, Bangalore, London, etc.) or is clearly targeting a non-US market, score it below 30 regardless of quality.
 
 Return ONLY valid JSON: an object mapping tweet ID to score. Example: {"123": 85, "456": 20}`,
         },

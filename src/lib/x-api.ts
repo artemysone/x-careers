@@ -96,7 +96,7 @@ export async function searchHiringTweets(bearerToken?: string) {
     max_results: perQuery,
     sort_order: "relevancy",
     "tweet.fields": ["created_at", "public_metrics", "author_id", "entities"],
-    "user.fields": ["name", "username", "profile_image_url", "verified"],
+    "user.fields": ["name", "username", "profile_image_url", "verified", "location"],
     expansions: ["author_id"],
   };
 
@@ -114,7 +114,7 @@ export async function searchHiringTweets(bearerToken?: string) {
 
   // Merge and deduplicate tweets + users
   const tweetsMap = new Map<string, { id: string; text: string; created_at?: string; author_id?: string; public_metrics?: { like_count: number; retweet_count: number; impression_count: number } }>();
-  const usersMap = new Map<string, { id: string; name: string; username: string; profile_image_url?: string; verified?: boolean }>();
+  const usersMap = new Map<string, { id: string; name: string; username: string; profile_image_url?: string; verified?: boolean; location?: string }>();
 
   for (const result of results) {
     for (const tweet of result.data?.data ?? []) {
